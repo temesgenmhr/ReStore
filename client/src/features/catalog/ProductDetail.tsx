@@ -11,7 +11,9 @@ import {
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Product } from "../../app/models/product";
-import axios from "axios";
+import agent from "../../app/api/agent";
+import NotFound from "../../app/errors/NotFound";
+import LoadingComponent from "../../app/layout/LoadingComponent";
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -19,16 +21,15 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios
-      .get(`http://localhost:5000/api/products/${id}`)
-      .then((response) => setProduct(response.data))
-      .catch((err) => console.log(err))
-      .finally(() => setLoading(false));
+    id &&
+      agent.Catalog.Details(parseInt(id))
+        .then((response) => setProduct(response))
+        .catch((error) => console.log(error))
+        .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <h3>Loading....</h3>;
-
-  if (!product) return <h3>Product not found</h3>;
+  if (loading) return <LoadingComponent message="Loading products..." />;
+  if (!product) return <NotFound />;
   return (
     <Grid container>
       <Grid item xs={6}>
@@ -38,7 +39,7 @@ export default function ProductDetail() {
           style={{ width: "100%" }}
         />
       </Grid>
-      <Grid xs={6}>
+      <Grid item xs={6}>
         <Typography variant="h3">{product.name}</Typography>
         <Divider sx={{ mb: 2 }} />
         <Typography color="secondary">
